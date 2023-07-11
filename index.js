@@ -9,6 +9,8 @@ const path = require('path')
 var bodyParser = require('body-parser');
 
 const connectDB = require('./config/dbConn')
+const {authJwt} = require('./middleware/jwt');
+
 
 const app = express()
 
@@ -22,13 +24,7 @@ app.use(morgan('dev'))
 app.use(cors())
 app.options('*', cors())
 
-// app.use(cors(corsOptions))
-app.use(cors())
-app.options('*', cors())
-
 app.use(express.json())
-
-app.use(cookieParser())
 
 // for parsing application/json
 app.use(bodyParser.json()); 
@@ -38,14 +34,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 //form-urlencoded
 
 app.use('/', express.static(path.join(__dirname, 'public')));
+app.use(authJwt())
+
 
 app.use('/', require('./routes/root'))
 app.use('/categories', require('./routes/categoryRoutes'))
-// app.use('/auth/update-image', require('./routes/imageRoute'))
-// app.use('/auth', require('./routes/authRoutes'))
-// app.use('/users', require('./routes/userRoutes'))
-// app.use('/services', require('./routes/serviceRoutes'))
-// app.use('/demands', require('./routes/demandRoutes'))
+app.use('/auth/update-image', require('./routes/imageRoute'))
+app.use('/auth', require('./routes/authRoutes'))
+app.use('/users', require('./routes/userRoutes'))
+app.use('/products', require('./routes/productRoutes'))
 
 // Wildcard for all unknown endpoints
 app.all('/*', (req, res)=> {

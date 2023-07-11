@@ -1,5 +1,5 @@
 const express = require('express')
-const servicesController = require('../controllers/servicesController')
+const productsController = require('../controllers/productsController')
 
 const router = express.Router()
 
@@ -48,12 +48,12 @@ const uploadS3 = multer({
 });
 
 router.route('/')
-    .get(servicesController.getAllServices)
-    .post(uploadS3.single('image'), servicesController.createNewService)
-    .patch(uploadS3.single('image'), servicesController.updateService)
-    .delete(servicesController.deleteService)
+    .get(productsController.getAllProducts)
+    .post(uploadS3.single('image'), productsController.createNewProduct)
+    .patch(uploadS3.single('image'), productsController.updateProduct)
+    .delete(productsController.deleteProduct)
 
 router.route('/:id')
-    .get(servicesController.getService)
+    .get(productsController.getProduct)
 
 module.exports = router

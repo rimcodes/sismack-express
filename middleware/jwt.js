@@ -9,18 +9,12 @@ function authJwt() {
         isRevoked: isRevoked
     }).unless({
         path: [
-            {url: /\/uploads(.*)/, method: ['GET', 'OPTIONS']},
-            {url: /\/services(.*)/, method: ['GET', 'OPTIONS']},
+            {url: /\/public(.*)/, method: ['GET', 'OPTIONS']},
+            {url: /\/products(.*)/, method: ['GET', 'OPTIONS']},
             {url: /\/categories(.*)/, method: ['GET', 'OPTIONS']},
-            {url: /\/messages(.*)/, method: ['GET', 'OPTIONS']},
-            {url: /\/promotions(.*)/, method: ['GET', 'OPTIONS']},
             {url: /\/users(.*)/, method: ['GET', 'OPTIONS']},
             `/`,
-            `/demands`,
-            { url: /\/demands(.*)/ },
-            { url: /\/auth(.*)/ },
-            { url: /\/notifs(.*)/ },
-            { url: /\/socket.io(.*)/ },
+            { url: /\/auth(.*)/ }
             // `/auth`,
             // `/auth/register`,
             // { url: /(.*)/ }
@@ -28,7 +22,7 @@ function authJwt() {
     });
 
     async function isRevoked(req, payload, done) {
-        if(!(payload.role === 'Admin')) {
+        if(!(payload.role === 'admin')) {
             done(null, true);
         };
 

@@ -55,8 +55,8 @@ router.route('/')
     .patch(uploadS3.single('image'), usersController.updateUser)
     .delete(usersController.deleteUser)
 
-router.route('/workers')
-    .get(usersController.getWorkers)
+router.route('/clients')
+    .get(usersController.getClients)
     
     // .put(usersController)
 router.route('/:id')

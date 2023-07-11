@@ -2,7 +2,7 @@ const asyncHandler = require('express-async-handler')
 
 // const {User} = require('../models/User')
 // const {Service} = require('../models/Service')
-// const {Category} = require('../models/Category')
+const {Category} = require('../models/Category')
 
 /**
  * @desc Get all Categories
@@ -11,7 +11,7 @@ const asyncHandler = require('express-async-handler')
  */
 const getAllCategories = asyncHandler(async (req, res) => {
     // get all the categories
-    const categories = await Category.find().populate('user category', '-password')
+    const categories = await Category.find()
     if(!categories?.length) {
         return res.status(400).json({ message: 'No Categoriess found'})
     }
@@ -26,7 +26,7 @@ const getAllCategories = asyncHandler(async (req, res) => {
  */
 const getCategory = asyncHandler(async (req, res) => {
     const { id } = req.params
-    const category = await Category.findById(id).populate('user category', '-password')
+    const category = await Category.findById(id)
 
     if (!category) {
         res.status(400).json({ message: 'No category with the given id!'})
@@ -43,23 +43,18 @@ const getCategory = asyncHandler(async (req, res) => {
  */
 const createNewCategory = asyncHandler(async (req, res) => {
     // Create a new Category
-    const { user, category, title, details } = req.body
+    const { title, details } = req.body
 
-    if (!user || !title || !details  ) {
-        return res.status(400).json({ message: 'All fields(user, title, details or category) are required'})
+    if ( !title || !details  ) {
+        return res.status(400).json({ message: 'All fields(title, details) are required'})
     }
-    
-    // checking user exists
-    const categoryUser = await User.findById(user).exec()
-    if (!categoryUser) {
-        return res.status(400).json({ message: 'The user is invalid' })
-    }
+
     
     const file = req.file;
     let imagePath;
 
-    let fileName = 'piblic/images/service.png';
-    let basePath = process.env.BASE_PATH;
+    let fileName = 'public/images/service.png';
+    let basePath = process.env.BASE_PATH || 'http://localhost:3500/'
     if(file) {
         fileName = req.file.key;
         basePath = process.env.BUCKETEER_BUCKET_NAME || ``;
@@ -69,17 +64,8 @@ const createNewCategory = asyncHandler(async (req, res) => {
     }
 
     let categoryObject = {}
-    // Checking for invalid category if provided
-    if (category) {
-        const subCategory = await Category.findById(category).exec()
-        if (!subCategory) {
-            return res.status(400).json({ message: 'The category is invalid'})
-        }
-        categoryObject = { user, category, title, details, image: imagePath }
 
-    }
-
-    categoryObject = { user, title, details,  image: imagePath }
+    categoryObject = { title, details,  image: imagePath }
 
     // Create and store service
     const createdCategory = await Category.create(categoryObject)
@@ -87,9 +73,9 @@ const createNewCategory = asyncHandler(async (req, res) => {
     // createdCategory = await createdCategory.save()
 
     if (createdCategory) {
-        res.status(201).json({ message: `New service ${createdCategory.title} created`})
+        res.status(201).json({ message: `New category created`, createdCategory})
     } else {
-        res.status(400).json({ message: 'Invalid service data recieved' })
+        res.status(400).json({ message: 'Invalid category data recieved' })
     }
 })
 
@@ -100,28 +86,16 @@ const createNewCategory = asyncHandler(async (req, res) => {
  */
 const updateCategory = asyncHandler(async (req, res) => {
     // Update a Category
-    const { id, user, category, title, details, active } = req.body
+    const { id, title, details, active } = req.body
 
-    if ( !id || !user || !title || !details || !active ) {
-        return res.status(400).json({ message: 'All fields(user, title, details, active or category) are required'})
+    if ( !id ) {
+        return res.status(400).json({ message: 'id is required'})
     }
 
     // Confirm service exists to update
-    const editedCategory = await Category.findById(id).exec()
+    const editedCategory = await Category.findById(id)
     if (!editedCategory) {
         return res.status(400).json({ message: 'Category not found'})
-    }
-
-    // Check for service with the same title
-    const duplicate = await Category.findOne({ title }).lean().exec()
-    if (duplicate && duplicate?._id.toString() !== id) {
-        return res.status(409).json({ message: 'Duplicate category title' })
-    }
-
-    // checking user exists
-    const categoryUser = await User.findById(user).exec()
-    if (!categoryUser) {
-        return res.status(400).json({ message: 'The user is invalid' })
     }
 
     const file = req.file;
@@ -135,23 +109,13 @@ const updateCategory = asyncHandler(async (req, res) => {
         editedCategory.image = imagePath
     }
 
-    // Checking for invalid category if provided
-    if (category) {
-        const subCategory = await Category.findById(category).exec()
-        if (!subCategory) {
-            return res.status(400).json({ message: 'The category is invalid'})
-        }
-        editedCategory.category = category
-    }
-
-    editedCategory.user = user
     editedCategory.title = title
     editedCategory.details = details
     editedCategory.active = active
 
     const updatedCategory = await editedCategory.save()
 
-    res.json({ message: `${updatedCategory.title} updated`})
+    res.json({ message: `${updatedCategory.title} updated`, editedCategory})
 })
 
 /**
@@ -165,19 +129,14 @@ const deleteCategory = asyncHandler(async (req, res) => {
 
     // Confirm data
     if (!id) {
-        return res.status(400).json({ message: 'Note ID required' })
+        return res.status(400).json({ message: 'Category ID required' })
     }
 
-    // Check if category has sub categories or services refrencing it
-    const  subCategory = await Category.findOne({ category: id}).lean().exec()
-    if(subCategory) {
-        return res.status(400).json({ message: 'Category has subcategories assigned to it!'})
-    }
-
-    const service = await Service.findOne({ category: id }).lean().exec()
-    if(service) {
-        return res.status(400).json({ message: 'Category has services assigned to it'})
-    }
+    // Need further work for implementing this feature
+    // const service = await Service.findOne({ category: id }).lean().exec()
+    // if(service) {
+    //     return res.status(400).json({ message: 'Category has services assigned to it'})
+    // }
 
     // Confirm service exists to delete
     const category = await Category.findById(id).exec()

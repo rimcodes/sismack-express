@@ -13,6 +13,9 @@ const categorySchema = mongoose.Schema(
             type: Boolean,
             default: true
         },
+        color: {
+            type: String
+        },
         image: {
             type: String
         },
